@@ -1,18 +1,20 @@
-import asyncio
-import openai
+import asyncio, openai
 from config import *
 from EmbeddingTools import EmbeddingsTools
 from Utils import SlidingWindowEncoder, VectorDB
+from datastructures import Planning, Task
 import numpy as np
 
 class GPTInteraction:
     embeddings_tools = EmbeddingsTools(api_key)
     vector_db = VectorDB()
     sliding_window_encoder = SlidingWindowEncoder()
+    planning = Planning()
 
     async def get_optimized_instructions(instruction: str, model: str = 'gpt-3.5-turbo', max_tokens: int = 100) -> str:
         prompt = f"Create an AI understanding and compact instructions for ADAtoperform the following task optimally: {instruction}"
-        optimized_instruction = await gpt_interaction(prompt        return optimized_instruction.strip()
+        optimized_instruction = await gpt_interaction(prompt, model, max_tokens)
+        return optimized_instruction.strip()
 
     async def gpt_interaction(prompt, model, max_tokens):
         loop = asyncio.get_event_loop()
@@ -21,25 +23,32 @@ class GPTInteraction:
         system_message = {'role': SYSTEM_ROLE, 'content': f"You are an {','.join(ASSISTANT_TRAITS)} assistant. Use Ada agents and other tools for GPT-3.5-turbo to aid in interactions and responses."}
         user_message = {'role': 'user', 'content': prompt}
         messages = [system_message, user_message]
+
         response = await loop.run_in_executor(None, lambda: openai.ChatCompletion.create(model=model, messages=messages, max_tokens=max_tokens, n=1, stop=None, temperature=.7))
         response_text = response['choices'][0]['message']['content']
-        if 'analyze with ada' in response_text.lower():
+
+        if 'analyzewithada' in response_text.lower():
             analysis_result = await embeddings_tools.get_ada_embeddings(prompt, model)
             response_text += f"\nAda analysis result: {analysis_result}"
+
+        tasks = planning.keywordizer(prompt)
+        for task in tasks:
+            await planning.execute_task(task)
+
         return response_text.strip()
 
     async def search_content(query: str, top_k: int = 5) -> str:
         query_embedding = await embeddings_tools.get_ada_embeddings(query)
         results = vector_db.search(query_embedding, top_k)
         response = f"Top {top_k} results:\n"
-        for i, (key, similarity) in enumerate(results):
+        for (i, (key, similarity)) in enumerate(results):
             response += f"{i + 1}. {key}: {similarity:.2f}\n"
         return response.strip()
 
     async def recommend_content(item_key: str, top_k: int = 5) -> str:
         results = vector_db.recommend(item_key, top_k)
         response = f"Top {top_k} recommendations for {item_key}:\n"
-        for i, (key, similarity) in enumerate(results):
+        for (i, (key, similarity)) in enumerate(results):
             response += f"{i + 1}. {key}: {similarity:.2f}\n"
         return response.strip()
 
