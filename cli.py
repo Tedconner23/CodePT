@@ -31,9 +31,10 @@ async def main():
         print('2. Ingest files into memory')
         print('3. Print files in Redis memory')
         print('4. Continue with GPT interaction')
-        print('5. Exit')
+        print('5. Handle other scripts in the repository')
+        print('6. Exit')
 
-        choice = input('Enter your choice (1/2/3/4/5): ')
+        choice = input('Enter your choice (1/2/3/4/5/6): ')
 
         if choice == '1':
             clear_redis_memory()
@@ -64,7 +65,6 @@ async def main():
                 new_input = input('User: ')
                 if new_input.lower() == 'exit':
                     break
-
                 tasks = keywordizer(planning, new_input)
                 for task in tasks:
                     await planning.execute_task(task)
@@ -86,10 +86,21 @@ async def main():
                     write_response_to_file(response, file_name)
 
         elif choice == '5':
-            break
+            print('Please provide the script name and required input in the format:')
+            print('script_name.py arg1 arg2 ...')
+            script_input = input('Enter script name and arguments: ')
+            try:
+                script_args = script_input.split()
+                script_name = script_args.pop(0)
+                await asyncio.create_subprocess_exec('python', script_name, *script_args)
+                print(f'Successfully executed {script_name} with arguments: {", ".join(script_args)}')
+            except Exception as e:
+                print(f'Error executing the script: {e}')
 
+        elif choice == '6':
+            break
         else:
-            print('Invalid choice. Please again.')
+            print('Invalid choice. Please try again.')
 
 if __name__ == '__main__':
     asyncio.run(main())
