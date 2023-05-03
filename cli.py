@@ -2,6 +2,14 @@ import asyncio
 from gpt import gpt_interaction, SlidingWindowEncoder
 from redismem import get_history_from_redis, save_history_to_redis, ingest_git_repo, ingest_pdf_files, get_pdf_library, print_files_in_redis_memory
 from config import write_response_to_file, calculate_max_tokens
+import re
+
+def keywordizer(input_text):
+    keywords = []
+    for task in planning.get_tasks():
+        if any(re.search(f'\\b{keyword}\\b', input_text, re.IGNORECASE) for keyword in task.keywords):
+            keywords.append(task.method)
+    return keywords
 
 async def main():
     while True:
