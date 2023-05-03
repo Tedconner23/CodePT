@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import sys
 from gpt import gpt_interaction, SlidingWindowEncoder
 from redismem import (
     clear_redis_memory,
@@ -39,7 +40,8 @@ def display_main_menu():
     print('3. Print files in Redis memory')
     print('4. Continue with GPT interaction')
     print('5. Handle other scripts in the repository')
-    print('6. Exit')
+    print('6. Run the default script (main.py)')
+    print('7. Exit')
 
 
 def display_sub_menu():
@@ -53,7 +55,7 @@ async def main():
 
     while True:
         display_main_menu()
-        choice = input('Enter your choice (1/2/3/4/5/6): ')
+        choice = input('Enter your choice (1/2/3/4/5/6/7): ')
 
         if choice == '1':
             clear_redis_memory()
@@ -104,23 +106,25 @@ async def main():
                     write_response_to_file(response, file_name)
 
         elif choice == '5':
-            print('Please provide the script name and required input in the format:')
-            print('script_name.py arg1 arg2 ...')
+            print('Please provide the script name('script_name.py arg1 arg2 ...')
             list_scripts()
             script_input = input('Enter script name and arguments: ')
 
             try:
                 script_args = script_input.split()
                 script_name = script_args.pop(0)
-                if script_name.endswith('.py') and os.path.isfile(script_name):
+                if script_name.endswith('.py') and os.path):
                     await asyncio.create_subprocess_exec('python', script_name, *script_args)
-                    print(f'Successfully executed {script_name} with arguments: {", ".join(script_args)}')
+                   fully executed {script_name} with arguments: {", ".join(script_args)}')
                 else:
                     print(f"Script '{script_name}' not found. Please choose a valid script.")
             except Exception as e:
-                print(f'Error executing the script: {e}')
-
         elif choice == '6':
+            try:
+                await asyncio.create_subprocess_exec 'main.py:
+                print(f'Error executing the main.py script: {e}')
+
+        elif choice == '7':
             break
 
         else:
