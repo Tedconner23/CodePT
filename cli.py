@@ -2,9 +2,10 @@ import asyncio
 from gpt import gpt_interaction, SlidingWindowEncoder
 from redismem import get_history_from_redis, save_history_to_redis, ingest_git_repo, ingest_pdf_files, get_pdf_library, print_files_in_redis_memory
 from config import write_response_to_file, calculate_max_tokens
+from datastructures import Planning
 import re
 
-def keywordizer(input_text):
+def keywordizer(planning, input_text):
     keywords = []
     for task in planning.get_tasks():
         if any(re.search(f'\\b{keyword}\\b', input_text, re.IGNORECASE) for keyword in task.keywords):
@@ -12,7 +13,7 @@ def keywordizer(input_text):
     return keywords
 
 async def main():
-    planning = Planning()  # Add this line at the beginning of the main function
+    planning = Planning()
     
     while True:
         print('\nOptions:')
@@ -39,11 +40,11 @@ async def main():
                 new_input = input('User: ')
                 if new_input.lower() == 'exit':
                     break
-                keywords = keywordizer(new_input)
+                keywords = keywordizer(planning, new_input)
                 for keyword in keywords:
                     task = next((t for t in planning.get_tasks() if t.method == keyword), None)
                     if task:
-                        planning.execute_tasks()
+                        planning.execute_tasks(task)
                 combined_input = f"{conversation_history}\nUser: {new_input}\nAI: "
                 max_tokens = calculate_max_tokens('gpt-3.5-turbo')
                 response = await gpt_interaction(combined_input, 'gpt-3.5-turbo', max_tokens)
@@ -61,4 +62,3 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-    
