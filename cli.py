@@ -1,20 +1,31 @@
 import asyncio
 from gpt import gpt_interaction, SlidingWindowEncoder
-from redismem import get_history_from_redis, save_history_to_redis, ingest_git_repo, ingest_pdf_files, get_pdf_library, print_files_in_redis_memory
+from redismem import (
+    get_history_from_redis,
+    save_history_to_redis,
+    ingest_git_repo,
+    ingest_pdf_files,
+    get_pdf_library,
+    print_files_in_redis_memory,
+)
 from config import write_response_to_file, calculate_max_tokens
-from datastructures import Planning
+from datastructures import Planning, Task
 import re
 
+
 def keywordizer(planning, input_text):
-    keywords = []
+    tasks_to_execute = []
     for task in planning.get_tasks():
-        if any(re.search(f'\\b{keyword}\\b', input_text, re.IGNORECASE) for keyword in task.keywords):
-            keywords.append(task.method)
-    return keywords
+        if any(
+            re.search(f'\\b{keyword}\\b', input_text, re.IGNORECASE)
+            for keyword in task.keywords
+        ):
+            tasks_to_execute.append(task)
+    return tasks_to_execute
+
 
 async def main():
     planning = Planning()
-    
     while True:
         print('\nOptions:')
         print('1. Clear Redis memory')
@@ -40,14 +51,17 @@ async def main():
                 new_input = input('User: ')
                 if new_input.lower() == 'exit':
                     break
-                keywords = keywordizer(planning, new_input)
-                for keyword in keywords:
-                    task = next((t for t in planning.get_tasks() if t.method == keyword), None)
-                    if task:
-                        planning.execute_tasks(task)
-                combined_input = f"{conversation_history}\nUser: {new_input}\nAI: "
+                tasks = keywordizer(planning, new_input)
+                for task in tasks:
+                    planning.execute_task(task)
+
+                combined_input = (
+                    f"{conversation_history}\nUser: {new_input}\nAI: "
+                )
                 max_tokens = calculate_max_tokens('gpt-3.5-turbo')
-                response = await gpt_interaction(combined_input, 'gpt-3.5-turbo', max_tokens)
+                response = await gpt_interaction(
+                    combined_input, 'gpt-3.5-turbo', max_tokens
+                )
                 conversation_history += f"User: {new_input}\nAI: {response}"
                 save_history_to_redis(conversation_history)
                 print(f"AI: {response}")
@@ -59,6 +73,7 @@ async def main():
             break
         else:
             print('Invalid choice. Please try again.')
+
 
 if __name__ == '__main__':
     asyncio.run(main())
