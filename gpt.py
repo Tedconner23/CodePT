@@ -1,13 +1,13 @@
 import asyncio
 import openai
 from config import *
-from EmbeddingTools import EmbeddingsTools
+from EmbeddingTools import EmbeddingTools
 from Utils import SlidingWindowEncoder, VectorDB
 from datastructures import Planning, Task
 import numpy as np
 
 class GPTInteraction:
-    embeddings_tools = EmbeddingsTools(api_key)
+    embeddings_tools = EmbeddingTools(api_key)
     vector_db = VectorDB()
     sliding_window_encoder = SlidingWindowEncoder()
     planning = Planning()
