@@ -68,17 +68,39 @@ class ConversationHistory:
         r.delete(CONVERSATION_HISTORY_KEY)
         
 class Task:
-    def __init__(self, name, description, keywords, method, priority=0, dependencies=None):
+    def __init__(self, name, goal, related_files=None, code_snippets=None, specific_instructions=None, methods=None, priority=0, dependencies=None):
         self.name = name
-        self.description = description
-        self.keywords = keywords
-        self.method = method
+        self.goal = goal
+        self.related_files = related_files if related_files is not None else []
+        self.code_snippets = code_snippets if code_snippets is not None else []
+        self.specific_instructions = specific_instructions if specific_instructions is not None else []
+        self.methods = methods if methods is not None else []
         self.priority = priority
         self.dependencies = dependencies if dependencies is not None else []
+
+    def update_goal(self, new_goal):
+        self.goal = new_goal
+
+    def add_related_file(self, file):
+        self.related_files.append(file)
+
+    def add_code_snippet(self, snippet):
+        self.code_snippets.append(snippet)
+
+    def add_specific_instruction(self, instruction):
+        self.specific_instructions.append(instruction)
+
+    def add_method(self, method):
+        self.methods.append(method)
 
 class Planning:
     def __init__(self):
         self.tasks = []
+        self.context = ""
+        self.snippets = []
+        self.external_links = []
+        self.repo = ""
+        self.highlighted_files = []
 
     def add_task(self, task):
         self.tasks.append(task)
@@ -91,6 +113,21 @@ class Planning:
 
     def get_task_dependencies(self, task):
         return [t for t in self.tasks if t.name in task.dependencies]
+
+    def set_context(self, context):
+        self.context = context
+
+    def add_snippet(self, snippet):
+        self.snippets.append(snippet)
+
+    def add_external_link(self, link):
+        self.external_links.append(link)
+
+    def set_repo(self, repo):
+        self.repo = repo
+
+    def add_highlighted_file(self, file):
+        self.highlighted_files.append(file)
 
     def execute_tasks(self):
         sorted_tasks = self.get_sorted_tasks()
