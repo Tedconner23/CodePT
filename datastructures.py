@@ -1,41 +1,7 @@
 import json
 import redis
 
-tools_and_methods = {
-    'EmbeddingsTools': {
-        'methods': [
-            'get_embeddings', 'cosine_similarity', 'get_similar_texts',
-            'recommend', 'get_average_embedding', 'get_nearest_neighbors',
-            'search'
-        ]
-    },
-    'GPTInteraction': {
-        'methods': [
-            'get_optimized_instructions', 'gpt_interaction', 'search_content',
-            'recommend_content', 'get_ada_embeddings', 'get_similar_texts',
-            'recommend', 'get_average_embedding', 'get_nearest_neighbors',
-            'search'
-        ]
-    },
-    'VectorDatabase': {
-        'methods': [
-            'add_item', 'get_item', 'get_keys_by_prefix', 'search',
-            'recommend'
-        ]
-    },
-    'Ingestion': {
-        'methods': [
-            'get_ada_embeddings', 'ingest_git_repo', 'ingest_pdf_files',
-            'get_pdf_library', 'print_files_in_redis_memory',
-            'save_history_to_redis', 'get_history_from_redis'
-        ]
-    },
-    'ExternalResources': {
-        'links': [
-            'https://platform.openai.com/docs/guides/embeddings/what-are-embeddings'
-        ]
-    }
-}
+tools_and_methods = {   'EmbeddingsTools': {   'methods': [   'get_ada_embeddings',   'cosine_similarity',   'get_similar_texts',   'recommend',   'get_average_embedding',   'get_nearest_neighbors',   'search'   ]   },   'GPTInteraction': {   'methods': [   'get_optimized_instructions',   'gpt_interaction',   'search_content',   'recommend_content',   'get_ada_embeddings',   'get_similar_texts',   'recommend',   'get_average_embedding',   'get_nearest_neighbors',   'search'   ]   },   'VectorDatabase': {   'methods': [   'add_item',   'get_item',   'get_keys_by_prefix',   'search',   'recommend'   ]   },   'Ingestion': {   'methods': [   'get_ada_embeddings',   'ingest_git_repo',   'ingest_pdf_files',   'get_pdf_library',   'print_files_in_redis_memory',   'save_history_to_redis',   'get_history_from_redis'   ]   },   'SlidingWindowEncoder': {   'methods': [   'encode',   'decode'   ]   },   'ExternalResources': {   'links': [   'https://platform.openai.com/docs/guides/embeddings/what-are-embeddings'   ]   } }
 
 CONVERSATION_HISTORY_KEY = 'conversation_history'
 r = redis.Redis(host='localhost', port=6379, db=0)
