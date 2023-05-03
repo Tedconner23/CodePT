@@ -90,16 +90,28 @@ class Task:
 
     def add_method(self, method):
         self.methods.append(method)
+        
+    def refine_goal(self, new_goal):
+        self.goal = new_goal
 
+    def update_related_files(self, files):
+        self.related_files = files
+
+    def update_code_snippets(self, snippets):
+        self.code_snippets = snippets
+
+    def update_specific_instructions(self, instructions):
+        self.specific_instructions = instructions
+
+    def present_and_review_methods(self, methods):
+        self.methods = methods
+        # Review and refine the methods if needed
 
 class Planning:
     def __init__(self, context="", repo="", iterations=1):
         self.tasks = []
         self.context = context
-        self.snippets = []
-        self.external_links = []
         self.repo = repo
-        self.highlighted_files = []
         self.iterations = iterations
 
     def add_task(self, task):
@@ -108,6 +120,26 @@ class Planning:
     def get_tasks(self):
         return self.tasks
 
+    def refine_task(self, task, goal=None, related_files=None, code_snippets=None, specific_instructions=None):
+        if goal:
+            task.refine_goal(goal)
+        if related_files:
+            task.update_related_files(related_files)
+        if code_snippets:
+            task.update_code_snippets(code_snippets)
+        if specific_instructions:
+            task.update_specific_instructions(specific_instructions)
+
+    def set_iterations(self, iterations):
+        self.iterations = iterations
+
+    def update_context(self, context):
+        self.context = context
+
+    def execute_finalized_plan(self):
+        # Iterate through tasks, refining and discussing with GPT
+        # Execute the plan and output files to the specified folder
+        
     def get_sorted_tasks(self):
         return sorted(self.tasks, key=lambda t: (-t.priority, t.goal))
 
