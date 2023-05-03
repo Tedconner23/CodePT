@@ -68,14 +68,12 @@ class ConversationHistory:
         r.delete(CONVERSATION_HISTORY_KEY)
         
 class Task:
-    def __init__(self, name, goal, related_files=None, code_snippets=None, specific_instructions=None, methods=None, priority=0, dependencies=None):
-        self.name = name
+    def __init__(self, goal, related_files=None, code_snippets=None, specific_instructions=None, methods=None, dependencies=None):
         self.goal = goal
         self.related_files = related_files if related_files is not None else []
         self.code_snippets = code_snippets if code_snippets is not None else []
         self.specific_instructions = specific_instructions if specific_instructions is not None else []
         self.methods = methods if methods is not None else []
-        self.priority = priority
         self.dependencies = dependencies if dependencies is not None else []
 
     def update_goal(self, new_goal):
@@ -95,13 +93,14 @@ class Task:
 
 
 class Planning:
-    def __init__(self):
+    def __init__(self, context="", repo="", iterations=1):
         self.tasks = []
-        self.context = ""
+        self.context = context
         self.snippets = []
         self.external_links = []
-        self.repo = ""
+        self.repo = repo
         self.highlighted_files = []
+        self.iterations = iterations
 
     def add_task(self, task):
         self.tasks.append(task)
@@ -110,10 +109,10 @@ class Planning:
         return self.tasks
 
     def get_sorted_tasks(self):
-        return sorted(self.tasks, key=lambda t: (-t.priority, t.name))
+        return sorted(self.tasks, key=lambda t: (-t.priority, t.goal))
 
     def get_task_dependencies(self, task):
-        return [t for t in self.tasks if t.name in task.dependencies]
+        return [t for t in self.tasks if t.goal in task.dependencies]
 
     def set_context(self, context):
         self.context = context
@@ -131,12 +130,12 @@ class Planning:
         self.highlighted_files.append(file)
 
     def execute_tasks(self):
-        sorted_tasks = self.get_sorted_tasks()
-        for task in sorted_tasks:
-            dependencies = self.get_task_dependencies(task)
-            for dependency in dependencies:
-                print(f"Executing dependency: {dependency.name}")
-                dependency.method()
-            print(f"Executing task: {task.name}")
-            task.method()
-            
+        for _ in range(self.iterations):
+            sorted_tasks = self.get_sorted_tasks()
+            for task in sorted_tasks:
+                dependencies = self.get_task_dependencies(task)
+                for dependency in dependencies:
+                    print(f"Executing dependency: {dependency.goal}")
+                    dependency.method()
+                print(f"Executing task: {task.goal}")
+                task.method()
