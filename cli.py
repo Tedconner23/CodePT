@@ -89,7 +89,7 @@ async def main():
                     file_name = input('Enter the output filename: ')
                     write_response_to_file(response, file_name)
                     print(f'Response saved to {file_name}.')
-       elif choice == '5':
+        elif choice == '5':
             print('Please provide the script name (script_name.py arg1 arg2...)')
             list_scripts()
             script_input = input('Enter script name and arguments: ')
