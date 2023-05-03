@@ -66,3 +66,20 @@ class ConversationHistory:
         self.documents = []
         self.queries = []
         r.delete(CONVERSATION_HISTORY_KEY)
+        
+class Task:
+    def __init__(self, name, description, keywords, method):
+        self.name = name
+        self.description = description
+        self.keywords = keywords
+        self.method = method
+
+class Planning:
+    def __init__(self):
+        self.tasks = []
+
+    def add_task(self, task):
+        self.tasks.append(task)
+
+    def get_tasks(self):
+        return self.tasks
