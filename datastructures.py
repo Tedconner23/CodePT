@@ -93,6 +93,7 @@ class Task:
     def add_method(self, method):
         self.methods.append(method)
 
+
 class Planning:
     def __init__(self):
         self.tasks = []
@@ -138,3 +139,4 @@ class Planning:
                 dependency.method()
             print(f"Executing task: {task.name}")
             task.method()
+            
