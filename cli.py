@@ -12,6 +12,8 @@ def keywordizer(input_text):
     return keywords
 
 async def main():
+    planning = Planning()  # Add this line at the beginning of the main function
+    
     while True:
         print('\nOptions:')
         print('1. Clear Redis memory')
@@ -37,6 +39,11 @@ async def main():
                 new_input = input('User: ')
                 if new_input.lower() == 'exit':
                     break
+                keywords = keywordizer(new_input)
+                for keyword in keywords:
+                    task = next((t for t in planning.get_tasks() if t.method == keyword), None)
+                    if task:
+                        planning.execute_tasks()
                 combined_input = f"{conversation_history}\nUser: {new_input}\nAI: "
                 max_tokens = calculate_max_tokens('gpt-3.5-turbo')
                 response = await gpt_interaction(combined_input, 'gpt-3.5-turbo', max_tokens)
