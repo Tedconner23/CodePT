@@ -68,11 +68,13 @@ class ConversationHistory:
         r.delete(CONVERSATION_HISTORY_KEY)
         
 class Task:
-    def __init__(self, name, description, keywords, method):
+    def __init__(self, name, description, keywords, method, priority=0, dependencies=None):
         self.name = name
         self.description = description
         self.keywords = keywords
         self.method = method
+        self.priority = priority
+        self.dependencies = dependencies if dependencies is not None else []
 
 class Planning:
     def __init__(self):
@@ -83,3 +85,19 @@ class Planning:
 
     def get_tasks(self):
         return self.tasks
+
+    def get_sorted_tasks(self):
+        return sorted(self.tasks, key=lambda t: (-t.priority, t.name))
+
+    def get_task_dependencies(self, task):
+        return [t for t in self.tasks if t.name in task.dependencies]
+
+    def execute_tasks(self):
+        sorted_tasks = self.get_sorted_tasks()
+        for task in sorted_tasks:
+            dependencies = self.get_task_dependencies(task)
+            for dependency in dependencies:
+                print(f"Executing dependency: {dependency.name}")
+                dependency.method()
+            print(f"Executing task: {task.name}")
+            task.method()
