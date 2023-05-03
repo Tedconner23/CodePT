@@ -1,4 +1,6 @@
 import asyncio
+import os
+import re
 from gpt import gpt_interaction, SlidingWindowEncoder
 from redismem import (
     clear_redis_memory,
@@ -10,8 +12,7 @@ from redismem import (
 )
 from config import write_response_to_file, calculate_max_tokens
 from datastructures import Planning, Task
-import re
-import os
+
 
 def keywordizer(planning, input_text):
     tasks_to_execute = []
@@ -23,11 +24,13 @@ def keywordizer(planning, input_text):
             tasks_to_execute.append(task)
     return tasks_to_execute
 
+
 def list_scripts():
     scripts = [f for f in os.listdir() if f.endswith('.py') and f != 'cli.py']
     print("Available scripts:")
     for script in scripts:
         print(f"  - {script}")
+
 
 def display_main_menu():
     print('\nOptions:')
@@ -38,10 +41,12 @@ def display_main_menu():
     print('5. Handle other scripts in the repository')
     print('6. Exit')
 
+
 def display_sub_menu():
     print('Options:')
     print('  a. Ingest Git repository')
     print('  b. Ingest PDF files')
+
 
 async def main():
     planning = Planning()
@@ -103,6 +108,7 @@ async def main():
             print('script_name.py arg1 arg2 ...')
             list_scripts()
             script_input = input('Enter script name and arguments: ')
+
             try:
                 script_args = script_input.split()
                 script_name = script_args.pop(0)
@@ -119,6 +125,7 @@ async def main():
 
         else:
             print('Invalid choice. Please try again.')
+
 
 if __name__ == '__main__':
     asyncio.run(main())
