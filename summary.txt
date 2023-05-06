@@ -1,0 +1,160 @@
+1. RedisDB.py
+   + Class VectorDatabase
+     - __init__(self, redis_client)
+     - add_item(self, key, value)
+     - get_item(self, key)
+     - add_vector(self, key, value)
+     - get_vector(self, key)
+     - search_vectors(self, query_embedding, top_k=5)
+     - recommend_vectors(self, item_key, top_k=5)
+     - get_keys_by_prefix(self, prefix)
+     - search(self, query_embedding, top_k=5)
+     - recommend(self, item_key, top_k=5)
+
+   + Class TextDatabase
+     - __init__(self, redis_client)
+     - add_item(self, key,value)
+     - get_item(self,key)
+     - add_text(self,key,value)
+     - get_text(self,key) 
+     - search_texts(self,query) 
+     - get_keys_by_prefix(self,prefix) 
+     - search(self,query,str_keys_prefix='text:')
+
+   + Class CodeDatabase
+   	- __init__(self, redis_client)
+   	- add_item(self,key,value) 
+   	- get_item(self,key) 
+   	- add_code(self,key,value) 
+   	- get_code(self,key) 
+   	- search_code (self , query ) 
+   	- get_keys_by_prefix ( self ,prefix ) 
+   	- search ( self , query , str_keys_prefix = ' code : ' )
+
+   + Class PDFDatabase
+   	- __init__ ( self , redis_client ) 
+   	- add_item ( self , key , value ) 
+   	- get_item ( self , key ) 
+   	- get_keys_by_prefix ( self , prefix ) 
+   	- add_pdf ( self , key , value ) 
+   	- get_pdf( self ,key )
+   	- search_pdfs( self ,query)
+
+2. Utils.py
+	+ Class Utils:
+	- __init__(self,data_path='../../data/',file_name='vector_database_articles_embedded')
+	- download_data(data_url:str,output_directory:str)->None
+	- read_data()->None
+	- save_data_to_redis()->None
+	- filter_data(column_name:str,value:str)->List[Tuple[str,str]]
+	- filter_data_multiple_conditions(conditions:Dict[str,str])->List[Tuple[str,str]]   
+	+ Class IngestFiles:
+	- ingest_git_repo(repo_url:str,file_types:List[str]=['.cs','.html','.js','.py'])->None
+	- ingest_pdf_files(directory:str)->None
+	- print_files_in_redis_memory()->None
+	
+3. EmbeddingTools.py
+	+ Class EmbeddingTools:
+	- __init__(self, gpt_interaction)
+	- cosine_similarity(self, a, b)
+	- euclidean_distance(self, a, b)
+	- manhattan_distance(self, a, b)
+	- normalize_embedding(self, embedding)
+	- get_similar_texts(self, query_embedding, text_embeddings, top_k=5)
+	- get_similar_texts_custom_metric(self, query_embedding, text_embeddings, metric_function, top_k=5)
+	- recommend(self, query, texts, top_k=5)
+	- get_average_embedding(self, texts, model='text-davinci-002')
+	- get_nearest_neighbors(self, query_embedding,text_embeddings,top_k=5)
+	- search(self,query,texts,top_k=5)
+	- search_content(self, query: str,top_k: int = 5) -> str
+	- recommend_content(self,item_key: str,top_k: int = 5) -> str
+	- get_similar_texts(gpt_interaction ,query_embedding: np.ndarray,text_embeddings: list,top_k: int = 5) -> list
+	- recommend_based_on_query(gpt_interaction ,query: str,texts: list,top_k: int = 5) -> list
+	- get_average_embedding(gpt_interaction ,texts:list,model:str='text-ada-002') -> np.ndarray
+	- get_nearest_neighbors(gpt_interaction ,query_embedding:np.ndarray,text_embeddings:list,top_k:int=5) ->list
+	- search_based_on_query(gpt_interaction ,query:str,texts:list,top_k:int=5)->list
+
+4. Operations.py
+Operations.py
+    + ClassOperations:
+        - __init__(self)
+        - search_code(self, query)
+        - search_pdfs(self, query)
+        - search_texts(self, query)
+        - search_vectors(self, query_embedding, top_k=5)
+        - recommend_vectors(self, item_key, top_k=5)
+        - ingest_git_repo(self, repo_url)
+        - ingest_pdf_files(self, directory)
+        - print_files_in_redis_memory(self)
+    + ClassConversationHistory:
+        - __init__(self)
+        - add_interaction(self, interaction)
+        - add_document(self, document)
+        - add_query(self, query)
+        - get_interactions(self)
+        - get_documents(self)
+        - get_queries(self)
+        - save_to_redis(self, r)
+        - load_from_redis(self, r)
+        - serialize(self)
+        - deserialize(self, data)
+       - clear_history (self,r)
+
+    + ClassTaskContext:
+         – __init__(self, task_id,
+           related_files=None,
+           code_snippets=None,
+           tools_and_methods=None) 
+         – add_related_file (self,file) 
+         – add_code_snippet (self,snippet) 
+         – add_tool_and_method (self , tool , method)
+
+    + ClassPlanningContext(TaskContext):
+         – __init__(self , goal_context , *args , **kwargs) 
+          – add_related_file (self,file) 
+          – add_relevant_knowledge (self,knowledge) 
+          – add_task (self , task)
+     + ClassTask:
+         – __init__(self,
+            goal,
+            task_context=None,
+            specific_instructions=None,
+            methods=None,
+            dependencies=None,
+            context=None )
+         – set_task_context ( self , task_context ) 
+         – get_task_context ( self ) 
+         – update_goal ( self , new_goal )
+         – add_related_file ( self , file )
+         – add_code_snippet ( self , snippet )
+         – add_specific_instruction ( self , instruction )
+         – add_method ( self , method )
+         – refine_goal ( self , new_goal )
+         – update_related_files( self , files )  
+         – update_code_snippets(self, snippets)
+         – update_specific_instructions(self, instructions)
+         – present_and_review_methods(self, methods)
+         – update_task_context(self, key, value)
+    + ClassPlanning:
+        - __init__(self,
+            tasks=None,
+            iterations=1,
+            context=None,
+            planning_context=None)
+        - set_planning_context(self, planning_context)
+        - get_planning_context(self)
+        - add_task(self, task)
+        - get_tasks(self)
+        - refine_task(self, task, goal=None, related_files=None,
+                      code_snippets=None, specific_instructions=None)
+        - set_iterations(self, iterations)
+        - update_context(self, context)
+        - execute_finalized_plan(self)
+        - get_sorted_tasks(self)
+        - get_task_dependencies(self, task)
+        - set_context(self, context)
+        - add_snippet(self, snippet)
+        - add_external_link(self, link)
+        - set_repo(self, repo)
+        - add_highlighted_file(self, file)
+        - execute_tasks(self)
