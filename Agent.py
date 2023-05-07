@@ -1,218 +1,171 @@
 from Operations import TaskContext, PlanningContext, Task, Planning, Operations, ConversationHistory
 from GPT import GPTInteraction
+from Config import OUTPUT_DIRECTORY, REPO_DIRECTORY, INGEST_DIRECTORY, CONVERSATION_HISTORY_KEY, agent_models, model_data
+from EmbeddingTools import embedding_tools_methods
 import multiprocessing
 
-embedding_tools_methods=[{'method_name':'search_content','input':('query','top_k'),'possible_output':'list of search results'},{'method_name':'recommend_content','input':('item_key','top_k'),'possible_output':'list of recommended items'},{'method_name':'get_similar_texts','input':('query_embedding','text_embeddings','top_k'),'possible_output':'list of similar texts'},{'method_name':'recommend_based_on_query','input':('query','texts','top_k'),'possible_output':'list of recommended texts'},{'method_name':'get_average_embedding','input':('texts','model'),'possible_output':'average embedding vector'},{'method_name':'get_nearest_neighbors','input':('query_embedding','text_embeddings','top_k'),'possible_output':'list of nearest neighbors'},{'method_name':'search_based_on_query','input':('query','texts','top_k'),'possible_output':'list of search results'},{'method_name':'unique_values','input':('column_name',),'possible_output':'list of unique values'},{'method_name':'basic_statistics','input':('column_name',),'possible_output':'dictionary containing basic statistics'},{'method_name':'top_n_most_frequent','input':('column_name','n'),'possible_output':'list of top n most frequent items'}]
+# Executive:
+# ManagerAgent: Coordinates AI system and agents. Collaborates with basic agents, mainly RelayAgent. Initializes ProjectManagerAgent, EmbedAgent, TerminalAgent, Browse&FileAgent, and RelayAgent. Registers agents with RelayAgent.
+# ProjectManagerAgent: Focuses on user goals/tasks. Initializes with Manager. Spawns LeadAgent for specific purposes or PersonaAgent for non-specific tasks. Also initializes MemoryAgent.
+# PersonaAgent: Manages user interactions and worker agents for requests. Acts as an extension of ProjectManagerAgent, handling user requests directly and spawning task-specific agents.
 
-class ExecutiveAgent:
-    def __init__(self, model_data, agent_id):
-        self.agent_id = agent_id
-        self.name = f"Executive{agent_id}"
-        self.model_data = model_data
-        self.processes = []
+# Leads:
+# LeadAgent: Collaborates with ProjectManagerAgent and user to design tasks (e.g., methods, story chapters). Provides contextual recommendations. Initializes GitManAgent and CodeAssemblyAgent for planning sessions.
+# MemoryAgent: Uses EmbedAgent to retrieve embeddings, selecting queries intelligently. Directs user input post-intent analysis for context analysis. Retrieves related context from memory or cached/stored links.
 
-    def spawn_worker(self, worker_class, *args):
-        process = multiprocessing.Process(target=worker_class, args=args)
-        process.start()
-        self.processes.append(process)
+# Workers:
+# GitManAgent: Manages Git operations, including commits, branches, and merges.
+# CodeAssemblyAgent: Processes plans with tasks defining method names and creation prompts. Performs syntax analysis and input-output analysis after method completion. Ensures code quality and adherence to guidelines.
+# TextAssemblyAgent: Similar to CodeAssemblyAgent, but works on a chapter or paragraph basis. Focuses on content coherence, flow, and language quality.
 
-    def subagent__receive(self, worker_class, *args):
-        # Receive messages from subagents
-        # Process the messages and decide the next course of action
-        pass
+# Basic:
+# EmbedAgent: Handles embedding files to databases and retrieving comparisons. Utilizes advanced similarity algorithms to compare and match data.
+# TerminalAgent: Manages basic input-output communication, displaying messages to users. Batches intent analysis and context searching based on intent. Supports user assistance and troubleshooting.
+# RelayAgent: Manages communication and dequeuing. Redirects communication based on lead or executive prompts. Ensures efficient routing and prioritization of tasks.
+# Browse&FileAgent: Manages local file system operations, browsing, and web downloads. Provides local links to embed models. Writes browsed files and downloaded resources to local files. Handles file organization, search, and retrieval.
 
-    def subagent__send(self, worker_class, *args):
-        # Send messages to subagents
-        # Coordinate the actions of subagents
-        pass
-
-    def exec_decide(self, worker_class, *args):
-        # Make decisions based on subagent input and the current state of the system
-        # This method should be called periodically to maintain the overall control of the system
-        pass
-
-    def exec_run_method(self, worker_class, *args):
-        # Execute specific methods of subagents
-        # This method can be used to directly control the actions of subagents
-        pass
-
-    def exec_run_command(self, worker_class, *args):
-        # Execute specific commands for subagents
-        # This method can be used to send commands to subagents, which they will execute
-        pass
-
-    def terminate_all_agents(self):
-        for process in self.processes:
-            process.terminate()
-        print("All agents terminated by ExecutiveAgent")
-
-    def terminate_individual_agent(self, agent_name):
-        for process in self.processes:
-            if process._args[0].name == agent_name:
-                process.terminate()
-                print(f"{agent_name} terminated by ExecutiveAgent")
-                return
-        print(f"Agent {agent_name} not found")
-        
-class ExecutiveSubAgent:
-    def __init__(self, model_data, agent_id):
-        self.agent_id = agent_id
-        self.name = f"Executive{agent_id}"
-        self.model_data = model_data
-        self.processes = []
-
-    def track_n_clean(self, request):
-        # Update and clean process list of running agents
-        # Analyze completion time vs estimated task time
-        # Alert exec to long-running tasks or agents
-        pass
-
-    def receive_user_interrupt(self, request):
-        # System input from user
-        # Used to pause, redirect, change, etc, as per user's wishes, directly to the highest hierarchy
-        # Input is put through intent analysis, then sent to exec
-        pass
-
-    def receive_request(self, request):
-        # Receive the request of agents and analyze complexity
-        # If complex beyond fast models, send to exec
-        pass
-
-    def analyze_request(self, request):
-        # Analyze the request and decide action
-        # Use fast models unless complexity > threshold
-        pass
-        
-class LeadAgent:
-    def __init__(self, model, level, traits, tools, agent_id, parent_agent=None):
-        self.model = model
-        self.level = level
-        self.traits = traits
-        self.tools = tools
-        self.agent_id = agent_id
-        self.name = f"Lead{agent_id}"
-        self.parent_agent = parent_agent
-
-    def spawn_worker(self, worker_class, *args):
-        process = multiprocessing.Process(target=worker_class, args=args)
-        process.start()
-        self.parent_agent.processes.append(process)
-
-    def terminate_code_ada_agents(self):
-        for process in self.parent_agent.processes:
-            if process._args[0] in [CodeAgent, AdaAgent] and process._args[0].parent_agent == self:
-                process.terminate()
-                print(f"{process._args[0].name} terminated by Lead Agent")
-
-class BrowsingAgent:
-    def __init__(self, model, level, traits, tools, agent_id, parent_agent=None):
-        self.model = model
-        self.level = level
-        self.traits = traits
-        self.tools = tools
-        self.agent_id = agent_id
-        self.name = f"Codex{agent_id}"
-        self.parent_agent = parent_agent
-
-    def execute_task(self):
-        super().execute_task()
-        gpt_interaction_script(self.model, self.task_context, self.planning_context)
-
-class CodeAgent:
-    def __init__(self, model, level, traits, tools, agent_id, parent_agent=None):
-        self.model = model
-        self.level = level
-        self.traits = traits
-        self.tools = tools
-        self.agent_id = agent_id
-        self.name = f"Codex{agent_id}"
-        self.parent_agent = parent_agent
-
-    def execute_task(self):
-        super().execute_task()
-        gpt_interaction_script(self.model, self.task_context, self.planning_context)        
-
-class EmbedAgent:
-    def __init__(self, model, level, traits, tools, agent_id, parent_agent=None):
-        self.model = model
-        self.level = level
-        self.traits = traits
-        self.tools = tools
-        self.agent_id = agent_id
-        self.name = f"Ada{agent_id}"
-        self.parent_agent = parent_agent
-        self.embedding_tools = EmbeddingTools('')
-        self.embedding_tools_methods=[{'method_name':'search_content','input':('query','top_k'),'possible_output':'list of search results'},{'method_name':'recommend_content','input':('item_key','top_k'),'possible_output':'list of recommended items'},{'method_name':'get_similar_texts','input':('query_embedding','text_embeddings','top_k'),'possible_output':'list of similar texts'},{'method_name':'recommend_based_on_query','input':('query','texts','top_k'),'possible_output':'list of recommended texts'},{'method_name':'get_average_embedding','input':('texts','model'),'possible_output':'average embedding vector'},{'method_name':'get_nearest_neighbors','input':('query_embedding','text_embeddings','top_k'),'possible_output':'list of nearest neighbors'},{'method_name':'search_based_on_query','input':('query','texts','top_k'),'possible_output':'list of search results'},{'method_name':'unique_values','input':('column_name',),'possible_output':'list of unique values'},{'method_name':'basic_statistics','input':('column_name',),'possible_output':'dictionary containing basic statistics'},{'method_name':'top_n_most_frequent','input':('column_name','n'),'possible_output':'list of top n most frequent items'}]
-
-    def search_content(self, query, top_k=5):
-        return self.embedding_tools.search_based_on_query(query, self.planning_context.related_files, top_k)
-
-    def recommend_content(self, item_key, top_k=5):
-        return self.embedding_tools.recommend_based_on_query(item_key, self.planning_context.related_files, top_k)
-
-    def call_tool_method(self, method_name, *args, **kwargs):
-        if hasattr(self.embedding_tools, method_name):
-            method = getattr(self.embedding_tools, method_name)
-            return method(*args, **kwargs)
-        else:
-            raise AttributeError(f"EmbeddingTools does not have a method named '{method_name}'")
-
-class MemoryAgent:
-    def __init__(self, model, level, traits, tools, agent_id, parent_agent=None):
-        self.model = model
-        self.level = level
-        self.traits = traits
-        self.tools = tools
-        self.agent_id = agent_id
-        self.name = f"Ada{agent_id}"
-        self.parent_agent = parent_agent
-
-    def search_conv_history(self, query, top_k=5):        
-    def search_redis(self, query, top_k=5):        
-
-    def recommend_content(self, item_key, top_k=5):
-        return self.embedding_tools.recommend_based_on_query(item_key, self.planning_context.related_files, top_k) 
 
 class Agent:
-    def __init__(self, model, role, level, traits, tools, agent_id, process, parent_agent=None):
-        self.model = model
+    def __init__(self, role, level, traits, tools, agent_id):
         self.role = role
         self.level = level
         self.traits = traits
         self.tools = tools
         self.agent_id = agent_id
         self.name = f"{role}{agent_id}"
-        self.process = process
-        self.parent_agent = parent_agent
-        self.task_context = TaskContext('')
-        self.planning_context = PlanningContext('')
-        self.embedding_tools = EmbeddingTools('')
+        self.gpt_interaction = GPTInteraction(model_data)
+        self.processes = []
 
-    def notify_admin(self):
-        print(f"Admin notified by {self.name}")
+    async def engage_user(self):
+        prompt = "Hello! I am your AI assistant. How can I help you today?"
+        model_name = "text-davinci-002"
+        response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
+        print(f"User engaged by {self.name}: {response_text}")
 
-    def engage_user(self):
-        print(f"User engaged by {self.name}")
+    async def notify_admin(self):
+        prompt = "An error has occurred. Please inform the administrator."
+        model_name = "text-davinci-002"
+        response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
+        print(f"Admin notified by {self.name}: {response_text}")
+
+    async def execute_task(self):
+        if self.role == 'Browsing' or self.role == 'Code':
+            prompt = "Please browse for relevant information or write code to complete the task."
+            model_name = "text-davinci-002"
+            response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
+            print(f"Task executed by {self.name}: {response_text}")
+
+    async def halt_execution(self):
+        prompt = "The execution has been halted. Please stop working on the current task."
+        model_name = "text-davinci-002"
+        response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
+        print(f"Execution halted by {self.name}: {response_text}")
+
+    async def terminate_agent_self(self):
+        prompt = f"Agent {self.name} is being terminated."
+        model_name = "text-davinci-002"
+        response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt,model_name)
+        print(f"Agent {self.name} self-terminated: {response_text}")
+
+    def spawn_worker(self, worker_class,*args):
+        if self.level == 'executive' or self.level == 'lead':
+            process=multiprocessing.Process(target=worker_class,args=args)
+            process.start()
+            self.processes.append(process)
+
+    def spawn_worker(self, worker_class, *args):
+        if self.level == 'executive' or self.level == 'lead':
+            process = multiprocessing.Process(target=worker_class, args=args)
+            process.start()
+            self.processes.append(process)
+
+    def add_subagent(self, subagent_class, *args):
+        if self.level == 'executive':
+            subagent = subagent_class(*args)
+            self.subagents.append(subagent)
+            return subagent
+
+    def subagent__receive(self, message):
+        print(f"{self.name} received message: {message}")
+
+    def subagent__send(self, message, target_agent):
+        print(f"{self.name} sent message to {target_agent.name}: {message}")
+        target_agent.subagent__receive(message)
+        
+    def exec_decide(self, worker_class, *args):
+        if self.level == 'executive':
+            for subagent in self.subagents:
+                if isinstance(subagent, worker_class):
+                    subagent.execute_task(*args)
+
+    def exec_run_method(self, worker_class, method_name, *args):
+        if self.level == 'executive':
+            for subagent in self.subagents:
+                if isinstance(subagent, worker_class) and hasattr(subagent, method_name):
+                    method = getattr(subagent, method_name)
+                    method(*args)
 
     def self_assessment(self):
         print(f"Self-assessment performed by {self.name}")
 
-    def execute_task(self):
-        print(f"Task executed by {self.name}")
+    def exec_run_command(self, command, *args, **kwargs):
+        if self.level == 'executive':
+            method = getattr(self, command)
+            method(*args, **kwargs)
 
-    def halt_execution(self):
-        print(f"Execution halted by {self.name}")
+    def terminate_all_agents(self):
+        if self.level == 'executive':
+            for process in self.processes:
+                process.terminate()
+            print("All agents terminated")
 
-    def terminate_agent_self(self):
-        print(f"Agent {self.name} self terminated")
+    def terminate_individual_agent(self, agent_name):
+        if self.level == 'executive':
+            for process in self.processes:
+                if process._args[0].name == agent_name:
+                    process.terminate()
+                    print(f"{agent_name} terminated")
+                    return
+            print(f"Agent {agent_name} not found")
+
+    def track_n_clean(self, request):
+        print(f"{self.name} is tracking and cleaning the request: {request}")
+
+    def receive_user_interrupt(self, request):
+        print(f"{self.name} received a user interrupt for request: {request}")
+
+    def receive_request(self, request):
+        print(f"{self.name} received a request: {request}")
+
+    def analyze_request(self, request):
+        print(f"{self.name} analyzed the request: {request}")
+        
+    def search_content(self, query, top_k=5):
+        if self.role == 'Embed':
+            return self.embedding_tools.search_based_on_query(query, self.planning_context.related_files, top_k)
+
+    def recommend_content(self, item_key, top_k=5):
+        if self.role == 'Embed':
+            return self.embedding_tools.recommend_based_on_query(item_key, self.planning_context.related_files, top_k)
+
+    def call_tool_method(self, method_name, *args, **kwargs):
+        if self.role == 'Embed':
+            if hasattr(self.embedding_tools, method_name):
+                method = getattr(self.embedding_tools, method_name)
+                return method(*args, **kwargs)
+            else:
+                raise AttributeError(f"EmbeddingTools does not have a method named '{method_name}'")
+
+
+    def search_conv_history(self, query,top_k=5):
+      return conversation_history.search(query,top_k)
+
+    def search_redis(self,key_pattern='*'):
+      return vector_db.get_keys(key_pattern)
 
 
 if __name__ == '__main__':
-    agent_parameters = 'model', 'level', 'traits', 'tools', 'agent_id'
-    executive_agent = ExecutiveAgent(model_data, '001')
-    lead_agent = LeadAgent(*agent_parameters, parent_agent=executive_agent)
-    code_agent = CodeAgent(*agent_parameters, parent_agent=lead_agent)
-    ada_agent = AdaAgent(*agent_parameters, parent_agent=lead_agent)
-    executive_agent.spawn_worker(LeadAgent, *agent_parameters, executive_agent)
-    lead_agent.spawn_worker(CodeAgent, *agent_parameters, lead_agent)
-    lead_agent.spawn_worker(AdaAgent, *agent_parameters, lead_agent)
+    agent_parameters = 'model', 'role', 'level', 'traits', 'tools', 'agent_id'
+    executive_agent = Agent(model_data, 'Executive', 'executive', *agent_parameters[2:])
+
+
