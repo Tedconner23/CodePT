@@ -24,7 +24,6 @@ import multiprocessing
 # RelayAgent: Manages communication and dequeuing. Redirects communication based on lead or executive prompts. Ensures efficient routing and prioritization of tasks.
 # Browse&FileAgent: Manages local file system operations, browsing, and web downloads. Provides local links to embed models. Writes browsed files and downloaded resources to local files. Handles file organization, search, and retrieval.
 
-
 class Agent:
     def __init__(self, role, level, traits, tools, agent_id):
         self.role = role
@@ -36,42 +35,42 @@ class Agent:
         self.gpt_interaction = GPTInteraction(model_data)
         self.processes = []
 
+    def select_model(self):
+        if self.role in agent_models:
+            return agent_models[self.role][0]
+        else:
+            return 'text-davinci-002'
+
     async def engage_user(self):
-        prompt = "Hello! I am your AI assistant. How can I help you today?"
-        model_name = "text-davinci-002"
+        prompt = 'Hello! I am your AI assistant. How can I help you today?'
+        model_name = self.select_model()
         response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
         print(f"User engaged by {self.name}: {response_text}")
 
     async def notify_admin(self):
-        prompt = "An error has occurred. Please inform the administrator."
-        model_name = "text-davinci-002"
+        prompt = 'An error has occurred. Please inform the administrator.'
+        model_name = self.select_model()
         response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
         print(f"Admin notified by {self.name}: {response_text}")
 
     async def execute_task(self):
         if self.role == 'Browsing' or self.role == 'Code':
-            prompt = "Please browse for relevant information or write code to complete the task."
-            model_name = "text-davinci-002"
+            prompt = 'Please browse for relevant information or write code to complete the task.'
+            model_name = self.select_model()
             response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
             print(f"Task executed by {self.name}: {response_text}")
 
     async def halt_execution(self):
-        prompt = "The execution has been halted. Please stop working on the current task."
-        model_name = "text-davinci-002"
+        prompt = 'The execution has been halted. Please stop working on the current task.'
+        model_name = self.select_model()
         response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
         print(f"Execution halted by {self.name}: {response_text}")
 
     async def terminate_agent_self(self):
         prompt = f"Agent {self.name} is being terminated."
-        model_name = "text-davinci-002"
-        response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt,model_name)
+        model_name = self.select_model()
+        response_text = await self.gpt_interaction.user_to_gpt_interaction(prompt, model_name)
         print(f"Agent {self.name} self-terminated: {response_text}")
-
-    def spawn_worker(self, worker_class,*args):
-        if self.level == 'executive' or self.level == 'lead':
-            process=multiprocessing.Process(target=worker_class,args=args)
-            process.start()
-            self.processes.append(process)
 
     def spawn_worker(self, worker_class, *args):
         if self.level == 'executive' or self.level == 'lead':
@@ -91,14 +90,14 @@ class Agent:
     def subagent__send(self, message, target_agent):
         print(f"{self.name} sent message to {target_agent.name}: {message}")
         target_agent.subagent__receive(message)
-        
+
     def exec_decide(self, worker_class, *args):
         if self.level == 'executive':
             for subagent in self.subagents:
                 if isinstance(subagent, worker_class):
                     subagent.execute_task(*args)
 
-    def exec_run_method(self, worker_class, method_name, *args):
+    def exec_run_method(self,    def exec_run_method(self, worker_class, method_name, *args):
         if self.level == 'executive':
             for subagent in self.subagents:
                 if isinstance(subagent, worker_class) and hasattr(subagent, method_name):
@@ -117,7 +116,7 @@ class Agent:
         if self.level == 'executive':
             for process in self.processes:
                 process.terminate()
-            print("All agents terminated")
+            print('All agents terminated')
 
     def terminate_individual_agent(self, agent_name):
         if self.level == 'executive':
@@ -139,7 +138,7 @@ class Agent:
 
     def analyze_request(self, request):
         print(f"{self.name} analyzed the request: {request}")
-        
+
     def search_content(self, query, top_k=5):
         if self.role == 'Embed':
             return self.embedding_tools.search_based_on_query(query, self.planning_context.related_files, top_k)
@@ -156,16 +155,13 @@ class Agent:
             else:
                 raise AttributeError(f"EmbeddingTools does not have a method named '{method_name}'")
 
+    def search_conv_history(self, query, top_k=5):
+        return conversation_history.search(query, top_k)
 
-    def search_conv_history(self, query,top_k=5):
-      return conversation_history.search(query,top_k)
-
-    def search_redis(self,key_pattern='*'):
-      return vector_db.get_keys(key_pattern)
+    def search_redis(self, key_pattern='*'):
+        return vector_db.get_keys(key_pattern)
 
 
 if __name__ == '__main__':
     agent_parameters = 'model', 'role', 'level', 'traits', 'tools', 'agent_id'
     executive_agent = Agent(model_data, 'Executive', 'executive', *agent_parameters[2:])
-
-
